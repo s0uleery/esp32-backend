@@ -12,7 +12,7 @@ import { EnergiaModule } from './energia/energia.module';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'tu_clave',
+      password: 'eery',
       database: 'esp32db',
       autoLoadEntities: true,
       synchronize: true,
