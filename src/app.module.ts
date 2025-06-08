@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MedicionesModule } from './mediciones/mediciones.module';
 import { VelocidadesModule } from './velocidades/velocidades.module';
 import { TiempoUsoModule } from './tiempo-uso/tiempo-uso.module';
+import { EnergiaModule } from './energia/energia.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TiempoUsoModule } from './tiempo-uso/tiempo-uso.module';
     MedicionesModule,
     VelocidadesModule,
     TiempoUsoModule,
+    EnergiaModule,
   ],
 })
 export class AppModule {}
