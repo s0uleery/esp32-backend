@@ -11,8 +11,9 @@ async function bootstrap() {
       url: 'mqtt://localhost:1883', // Cambia si tienes otro host o puerto
     },
   });
-
+  console.log('🟡 Inicializando microservicio MQTT...');
   await app.startAllMicroservices();
+  console.log('🟢 MQTT iniciado correctamente');
   await app.listen(3000);
 }
 bootstrap();

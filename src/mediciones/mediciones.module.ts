@@ -8,5 +8,6 @@ import { Medicion } from './entities/medicion.entity';
   imports: [TypeOrmModule.forFeature([Medicion])],
   controllers: [MedicionesController],
   providers: [MedicionesService],
+  exports: [MedicionesService],
 })
 export class MedicionesModule {}
