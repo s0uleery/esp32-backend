@@ -11,31 +11,55 @@ export class MqttHandlerService implements OnModuleInit {
 
   onModuleInit() {
     // Conectar al broker MQTT
-    const mqttBrokerUrl = process.env.MQTT_BROKER_URL || '192.168.1.12';
+    const mqttBrokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://192.168.1.12';
     this.client = mqtt.connect(mqttBrokerUrl);
 
     // Cuando se conecta al broker
     this.client.on('connect', () => {
       console.log('Conectado al broker MQTT');
-      this.client.subscribe('ventilador/velocidad/status'); // Escuchar cambios de velocidad
-      this.client.subscribe('ventilador/estado'); // Escuchar cambios de estado (encendido o apagado)
+      this.client.subscribe('ventilador/velocidad/status'); // Cambios de velocidad
+      this.client.subscribe('ventilador/estado'); // Cambios de estado (encendido o apagado)
+      this.client.subscribe('sensor/ambiente/temperatura'); // Temperatura c°
+      this.client.subscribe('sensor/ambiente/humedad'); // % de humedad
+      this.client.subscribe('sensor/ambiente/gas/analogico'); //numero de gas
+      this.client.subscribe('sensor/ambiente/gas/digital'); //Gas nocivo (true or false)
     });
 
     // Suscribirse a mensajes de MQTT
     this.client.on('message', (topic, payload) => {
       const data = payload.toString();
-      console.log(`Mensaje recibido en [${topic}]: ${data}`);
+      console.log(`📩 MQTT recibido → [${topic}]: ${data}`);
 
-      // Procesar el mensaje recibido de la velocidad
+      // Ventilador
       if (topic === 'ventilador/velocidad/status') {
         const velocidad = parseInt(data);
-        this.mqttHandlerGateway.emitVelocidadActual(velocidad, velocidad > 0); // Emitir evento WebSocket
+        this.mqttHandlerGateway.emitVelocidadActual(velocidad, velocidad > 0);
       }
 
-      // Procesar el mensaje recibido del estado (encendido o apagado)
       if (topic === 'ventilador/estado') {
-        const estado = data === 'true'; // Estado encendido (true) o apagado (false)
-        this.mqttHandlerGateway.emitEstadoVentilador(estado); // Emitir evento WebSocket
+        const estado = data === 'true';
+        this.mqttHandlerGateway.emitEstadoVentilador(estado);
+      }
+
+      // Sensores
+      if (topic === 'sensor/ambiente/temperatura') {
+        const temp = parseFloat(data);
+        this.mqttHandlerGateway.emitTemperatura(temp);
+      }
+
+      if (topic === 'sensor/ambiente/humedad') {
+        const hum = parseFloat(data);
+        this.mqttHandlerGateway.emitHumedad(hum);
+      }
+
+      if (topic === 'sensor/ambiente/gas/analogico') {
+        const gasAO = parseInt(data);
+        this.mqttHandlerGateway.emitGasAnalogico(gasAO);
+      }
+
+      if (topic === 'sensor/ambiente/gas/digital') {
+        const gasDO = parseInt(data);
+        this.mqttHandlerGateway.emitGasDigital(gasDO);
       }
     });
 
@@ -55,13 +79,17 @@ export class MqttHandlerService implements OnModuleInit {
 
   // Método de reconexión en caso de desconexión
   reconnect() {
-    const mqttBrokerUrl = process.env.MQTT_BROKER_URL || '192.168.1.12';
+    const mqttBrokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://192.168.1.12';
     this.client = mqtt.connect(mqttBrokerUrl);
 
     this.client.on('connect', () => {
       console.log('Reconectado al broker MQTT');
-      this.client.subscribe('ventilador/velocidad/status'); // Volver a suscribirse
-      this.client.subscribe('ventilador/estado'); // Volver a suscribirse
+      this.client.subscribe('ventilador/velocidad/status');
+      this.client.subscribe('ventilador/estado');
+      this.client.subscribe('sensor/ambiente/temperatura');
+      this.client.subscribe('sensor/ambiente/humedad');
+      this.client.subscribe('sensor/ambiente/gas/analogico');
+      this.client.subscribe('sensor/ambiente/gas/digital');
     });
 
     this.client.on('error', (err) => {

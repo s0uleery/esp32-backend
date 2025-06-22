@@ -3,38 +3,62 @@ import {
   SubscribeMessage,
   MessageBody,
   WsResponse,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Injectable } from '@nestjs/common';
+import { Server } from 'socket.io';
 
-@WebSocketGateway() // Decorador WebSocket Gateway
+@WebSocketGateway()
 @Injectable()
 export class MqttHandlerGateway {
-  // Emitir la velocidad y el estado actual del ventilador a todos los clientes conectados
+  @WebSocketServer()
+  server: Server;
+
+  // 🔹 Emitir velocidad y estado del ventilador
   emitVelocidadActual(velocidad: number, estado: boolean) {
-    return {
-      event: 'estado_ventilador', // Nombre del evento
-      data: {
-        velocidad, // Velocidad actual
-        estado, // Estado del ventilador (encendido o apagado)
-      }, // Datos enviados
-    };
+    this.server.emit('estado_ventilador', {
+      velocidad,
+      estado,
+    });
   }
 
-  // Emitir el estado del ventilador (encendido o apagado)
+  // 🔹 Emitir solo estado (true o false)
   emitEstadoVentilador(estado: boolean) {
-    return {
-      event: 'estado_ventilador', // Nombre del evento
-      data: {
-        estado, // Estado del ventilador (encendido o apagado)
-      }, // Datos enviados
-    };
+    this.server.emit('estado_ventilador', {
+      estado,
+    });
   }
 
-  // Escuchar el cambio de velocidad desde la app (si es necesario)
+  // 🔹 Escuchar desde frontend si se envía una nueva velocidad
   @SubscribeMessage('cambiar_velocidad')
   handleVelocidadChange(@MessageBody() velocidad: number): WsResponse<any> {
-    // Emitir el evento WebSocket con la nueva velocidad y el estado del ventilador (encendido o apagado)
-    const estado = velocidad > 0; // Si la velocidad es mayor a 0, el ventilador está encendido
+    const estado = velocidad > 0;
     return { event: 'estado_ventilador', data: { velocidad, estado } };
+  }
+
+  // 🔹 Nuevas funciones para emitir datos de sensores
+
+  emitTemperatura(valor: number) {
+    this.server.emit('sensor/temperatura', {
+      temperatura: valor,
+    });
+  }
+
+  emitHumedad(valor: number) {
+    this.server.emit('sensor/humedad', {
+      humedad: valor,
+    });
+  }
+
+  emitGasAnalogico(valor: number) {
+    this.server.emit('sensor/gas/analogico', {
+      gasAnalogico: valor,
+    });
+  }
+
+  emitGasDigital(valor: number) {
+    this.server.emit('sensor/gas/digital', {
+      gasDigital: valor,
+    });
   }
 }
