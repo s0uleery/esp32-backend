@@ -1,19 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+// src/tiempo-uso/entities/tiempo-uso.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Energia } from '../../energia/entities/energia.entity';
 
 @Entity()
 export class TiempoUso {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'timestamp' })
-  inicio: Date;
+  @Column()
+  fechaInicio: Date;
 
-  @Column({ type: 'timestamp' })
-  fin: Date;
+  @Column({ nullable: true })
+  fechaFin: Date;
 
-  @Column('int')
-  duracion_seg: number;
+  @Column()
+  duracion_seg: number; // Duración en segundos
 
-  @Column('int')
-  velocidad_prom: number;
+  @Column()
+  velocidad_prom: number; // Velocidad promedio del ventilador (1, 2, 3)
+
+  @OneToMany(() => Energia, (energia) => energia.tiempo_uso)
+  energia: Energia[]; // Relación con Energia
 }
