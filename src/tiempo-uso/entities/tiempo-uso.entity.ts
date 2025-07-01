@@ -8,10 +8,10 @@ export class TiempoUso {
   id: number;
 
   @Column()
-  fechaInicio: Date;
+  inicio: Date;
 
   @Column({ nullable: true })
-  fechaFin: Date;
+  fin: Date;
 
   @Column()
   duracion_seg: number; // Duración en segundos

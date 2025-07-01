@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { EnergiaService } from './energia.service';
 
 @Controller('energia')
@@ -8,6 +8,11 @@ export class EnergiaController {
   @Post()
   create(@Body('tiempoUsoId') tiempoUsoId: number) {
     return this.service.create(tiempoUsoId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: number) {
+    return this.service.findOne(+id);
   }
 
   @Get()

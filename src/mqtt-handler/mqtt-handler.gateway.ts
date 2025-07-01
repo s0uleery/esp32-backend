@@ -1,3 +1,4 @@
+// mqtt-handler.gateway.ts
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -36,29 +37,8 @@ export class MqttHandlerGateway {
     return { event: 'estado_ventilador', data: { velocidad, estado } };
   }
 
-  // 🔹 Nuevas funciones para emitir datos de sensores
-
-  emitTemperatura(valor: number) {
-    this.server.emit('sensor/temperatura', {
-      temperatura: valor,
-    });
-  }
-
-  emitHumedad(valor: number) {
-    this.server.emit('sensor/humedad', {
-      humedad: valor,
-    });
-  }
-
-  emitGasAnalogico(valor: number) {
-    this.server.emit('sensor/gas/analogico', {
-      gasAnalogico: valor,
-    });
-  }
-
-  emitGasDigital(valor: number) {
-    this.server.emit('sensor/gas/digital', {
-      gasDigital: valor,
-    });
+  // 🔹 Emitir cualquier medición nueva (temperatura, humedad, gas, etc.)
+  emitMedicion(medicion: { tipo: string; valor: number }) {
+    this.server.emit('nueva_medicion', medicion);
   }
 }

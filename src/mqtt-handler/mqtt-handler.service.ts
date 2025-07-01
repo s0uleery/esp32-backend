@@ -2,12 +2,25 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as mqtt from 'mqtt';
 import { MqttHandlerGateway } from './mqtt-handler.gateway'; // Importa el Gateway para emitir eventos
+import { MedicionesService } from 'src/mediciones/mediciones.service';
+import { TiempoUsoService } from 'src/tiempo-uso/tiempo-uso.service';
+import { EnergiaService } from 'src/energia/energia.service';
 
 @Injectable()
 export class MqttHandlerService implements OnModuleInit {
   private client: mqtt.MqttClient;
 
-  constructor(private readonly mqttHandlerGateway: MqttHandlerGateway) {}
+  constructor(
+    private readonly mqttHandlerGateway: MqttHandlerGateway,
+    private readonly medicionesService: MedicionesService,
+    private readonly tiempoUsoService: TiempoUsoService,
+    private readonly energiaService: EnergiaService,
+  ) {}
+
+  private sesionActiva: {
+    inicio: number;
+    velocidades: number[];
+  } | null = null;
 
   onModuleInit() {
     // Conectar al broker MQTT
@@ -27,40 +40,99 @@ export class MqttHandlerService implements OnModuleInit {
 
     // Suscribirse a mensajes de MQTT
     this.client.on('message', (topic, payload) => {
-      const data = payload.toString();
-      console.log(`📩 MQTT recibido → [${topic}]: ${data}`);
+      void (async () => {
+        const data = payload.toString();
+        console.log(`MQTT [${topic}] → ${data}`);
 
-      // Ventilador
-      if (topic === 'ventilador/velocidad/status') {
-        const velocidad = parseInt(data);
-        this.mqttHandlerGateway.emitVelocidadActual(velocidad, velocidad > 0);
-      }
+        if (topic === 'ventilador/velocidad/status') {
+          const velocidad = parseInt(data);
+          this.mqttHandlerGateway.emitVelocidadActual(velocidad, velocidad > 0);
 
-      if (topic === 'ventilador/estado') {
-        const estado = data === 'true';
-        this.mqttHandlerGateway.emitEstadoVentilador(estado);
-      }
+          if (velocidad > 0 && !this.sesionActiva) {
+            // Comenzar nueva sesión
+            this.sesionActiva = {
+              inicio: Date.now(),
+              velocidades: [velocidad],
+            };
+          } else if (velocidad > 0 && this.sesionActiva) {
+            // Añadir velocidad a la sesión activa
+            this.sesionActiva.velocidades.push(velocidad);
+          }
+        }
 
-      // Sensores
-      if (topic === 'sensor/ambiente/temperatura') {
-        const temp = parseFloat(data);
-        this.mqttHandlerGateway.emitTemperatura(temp);
-      }
+        if (topic === 'ventilador/estado') {
+          const estado = data === 'true';
+          this.mqttHandlerGateway.emitEstadoVentilador(estado);
 
-      if (topic === 'sensor/ambiente/humedad') {
-        const hum = parseFloat(data);
-        this.mqttHandlerGateway.emitHumedad(hum);
-      }
+          if (!estado && this.sesionActiva) {
+            // Fin de sesión
+            const fin = Date.now();
+            const duracionSeg = Math.floor(
+              (fin - this.sesionActiva.inicio) / 1000,
+            );
+            const promedio = Math.round(
+              this.sesionActiva.velocidades.reduce((a, b) => a + b, 0) /
+                this.sesionActiva.velocidades.length,
+            );
 
-      if (topic === 'sensor/ambiente/gas/analogico') {
-        const gasAO = parseInt(data);
-        this.mqttHandlerGateway.emitGasAnalogico(gasAO);
-      }
+            const tiempo = await this.tiempoUsoService.create({
+              inicio: new Date(this.sesionActiva.inicio),
+              fin: new Date(fin),
+              duracion_seg: duracionSeg,
+              velocidad_prom: promedio,
+            });
+            await this.energiaService.create(tiempo.id);
+            this.sesionActiva = null;
+          }
+        }
 
-      if (topic === 'sensor/ambiente/gas/digital') {
-        const gasDO = parseInt(data);
-        this.mqttHandlerGateway.emitGasDigital(gasDO);
-      }
+        try {
+          switch (topic) {
+            case 'sensor/ambiente/temperatura': {
+              const valor = parseFloat(data);
+              await this.medicionesService.create({ temperatura: valor });
+              this.mqttHandlerGateway.emitMedicion({
+                tipo: 'temperatura',
+                valor,
+              });
+              break;
+            }
+
+            case 'sensor/ambiente/humedad': {
+              const valor = parseFloat(data);
+              await this.medicionesService.create({ humedad: valor });
+              this.mqttHandlerGateway.emitMedicion({ tipo: 'humedad', valor });
+              break;
+            }
+
+            case 'sensor/ambiente/gas/analogico': {
+              const valor = parseInt(data);
+              await this.medicionesService.create({ gas_analogico: valor });
+              this.mqttHandlerGateway.emitMedicion({
+                tipo: 'gas_analogico',
+                valor,
+              });
+              break;
+            }
+
+            case 'sensor/ambiente/gas/digital': {
+              const valor = data === '1' || data === 'true';
+              await this.medicionesService.create({ gas_digital: valor });
+              this.mqttHandlerGateway.emitMedicion({
+                tipo: 'gas_digital',
+                valor: valor ? 1 : 0,
+              });
+              break;
+            }
+          }
+        } catch (err) {
+          if (err instanceof Error) {
+            console.error('Error al guardar medición:', err.message);
+          } else {
+            console.error('Error desconocido:', err);
+          }
+        }
+      })();
     });
 
     // Manejo de errores
@@ -90,11 +162,6 @@ export class MqttHandlerService implements OnModuleInit {
       this.client.subscribe('sensor/ambiente/humedad');
       this.client.subscribe('sensor/ambiente/gas/analogico');
       this.client.subscribe('sensor/ambiente/gas/digital');
-    });
-
-    this.client.on('error', (err) => {
-      console.error('Error de reconexión MQTT:', err);
-      setTimeout(() => this.reconnect(), 5000); // Reintentar reconectar cada 5 segundos
     });
   }
 

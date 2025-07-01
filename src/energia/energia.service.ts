@@ -47,6 +47,13 @@ export class EnergiaService {
         return 0; // Si la velocidad no está definida, no consume energía
     }
   }
+  //Obtener registro por su id
+  async findOne(id: number) {
+    return this.energiaRepo.findOne({
+      where: { id },
+      relations: ['tiempo_uso'],
+    });
+  }
 
   // Obtener todos los registros de energía
   async findAll() {

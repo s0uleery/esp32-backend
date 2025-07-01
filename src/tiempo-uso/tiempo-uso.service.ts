@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TiempoUso } from './entities/tiempo-uso.entity';
+import { CreateTiempoUsoDto } from './dto/create-tiempo-uso.dto'; // 👈 importa el DTO
 
 @Injectable()
 export class TiempoUsoService {
@@ -10,9 +11,9 @@ export class TiempoUsoService {
     private repo: Repository<TiempoUso>,
   ) {}
 
-  create(data: Partial<TiempoUso>) {
-    const registro = this.repo.create(data);
-    return this.repo.save(registro);
+  async create(dto: CreateTiempoUsoDto) {
+    const nuevo = this.repo.create(dto);
+    return this.repo.save(nuevo);
   }
 
   findAll() {
