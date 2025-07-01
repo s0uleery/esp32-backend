@@ -1,18 +1,19 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+// src/mediciones/mediciones.controller.ts
+import { Controller, Post, Get, Body } from '@nestjs/common';
 import { MedicionesService } from './mediciones.service';
 import { Medicion } from './entities/medicion.entity';
 
 @Controller('mediciones')
 export class MedicionesController {
-  constructor(private readonly service: MedicionesService) {}
+  constructor(private readonly medicionesService: MedicionesService) {}
 
   @Post()
   create(@Body() data: Partial<Medicion>) {
-    return this.service.create(data);
+    return this.medicionesService.create(data);
   }
 
   @Get()
-  findAll(): Promise<Medicion[]> {
-    return this.service.findAll();
+  findAll() {
+    return this.medicionesService.findAll();
   }
 }

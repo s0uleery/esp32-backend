@@ -1,3 +1,4 @@
+// src/mediciones/mediciones.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,15 +8,15 @@ import { Medicion } from './entities/medicion.entity';
 export class MedicionesService {
   constructor(
     @InjectRepository(Medicion)
-    private repo: Repository<Medicion>,
+    private repo: Repository<Medicion>, // El repositorio se inyecta correctamente
   ) {}
 
-  create(data: Partial<Medicion>) {
+  async create(data: Partial<Medicion>) {
     const nueva = this.repo.create(data);
     return this.repo.save(nueva);
   }
 
-  findAll() {
+  async findAll() {
     return this.repo.find({ order: { timestamp: 'DESC' } });
   }
 }
