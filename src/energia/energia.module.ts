@@ -9,5 +9,6 @@ import { TiempoUso } from '../tiempo-uso/entities/tiempo-uso.entity';
   imports: [TypeOrmModule.forFeature([Energia, TiempoUso])],
   controllers: [EnergiaController],
   providers: [EnergiaService],
+  exports: [EnergiaService],
 })
 export class EnergiaModule {}
