@@ -25,7 +25,7 @@ export class MqttHandlerService implements OnModuleInit {
   onModuleInit() {
     // Conectar al broker MQTT
     const mqttBrokerUrl =
-      process.env.MQTT_BROKER_URL || 'mqtt://192.168.118.74';
+      process.env.MQTT_BROKER_URL || 'mqtt://192.168.208.74';
     this.client = mqtt.connect(mqttBrokerUrl);
 
     // Cuando se conecta al broker
@@ -153,7 +153,7 @@ export class MqttHandlerService implements OnModuleInit {
   // Método de reconexión en caso de desconexión
   reconnect() {
     const mqttBrokerUrl =
-      process.env.MQTT_BROKER_URL || 'mqtt://192.168.118.74';
+      process.env.MQTT_BROKER_URL || 'mqtt://192.168.208.74';
     this.client = mqtt.connect(mqttBrokerUrl);
 
     this.client.on('connect', () => {

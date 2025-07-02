@@ -34,6 +34,11 @@ export class MqttHandlerGateway {
   @SubscribeMessage('cambiar_velocidad')
   handleVelocidadChange(@MessageBody() velocidad: number): WsResponse<any> {
     const estado = velocidad > 0;
+
+    console.log('Recibido cambio de velocidad:', velocidad, 'Estado:', estado); // Agrega este log
+
+    this.emitVelocidadActual(velocidad, estado); // Emite la nueva velocidad
+
     return { event: 'estado_ventilador', data: { velocidad, estado } };
   }
 

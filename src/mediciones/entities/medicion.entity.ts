@@ -6,18 +6,18 @@ export class Medicion {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  timestamp: Date;
-
-  @Column('float')
+  @Column({ nullable: true })
   temperatura: number;
 
-  @Column('float')
+  @Column({ nullable: true })
   humedad: number;
 
-  @Column('float')
+  @Column({ nullable: true })
   gas_analogico: number;
 
-  @Column('boolean')
-  gas_digital: boolean;
+  @Column({ type: 'boolean', nullable: true }) // Cambiado a boolean
+  gas_digital: boolean; // Campo de gas digital como booleano
+
+  @Column()
+  timestamp: Date;
 }
